@@ -15,6 +15,12 @@ jobs:
     name: Build Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    
+    defaults:
+      run:
+        # உங்கள் build.gradle எந்த ஃபோல்டர்ல இருக்கோ அதை இங்கே கொடுங்க. 
+        # பொதுவா இது './' அல்லது './NaveenTool' ஆக இருக்கும்.
+        working-directory: ./ 
 
     steps:
       - name: Checkout source
@@ -29,13 +35,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build with Gradle (without wrapper)
+      - name: Build with Gradle
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: NaveenTool-debug-apk
+          # APK எந்த பாதையில இருக்கோ அதை இங்கே கொடுங்க
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
