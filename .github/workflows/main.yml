@@ -15,12 +15,6 @@ jobs:
     name: Build Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    
-    defaults:
-      run:
-        # உங்கள் build.gradle எந்த ஃபோல்டர்ல இருக்கோ அதை இங்கே கொடுங்க. 
-        # பொதுவா இது './' அல்லது './NaveenTool' ஆக இருக்கும்.
-        working-directory: ./ 
 
     steps:
       - name: Checkout source
@@ -35,14 +29,28 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Find Gradle Build Directory
+        id: find_gradle
+        run: |
+          # settings.gradle இருக்குற இடத்தைத் தேடி, அந்த ஃபோல்டர் பாதையைக் கண்டுபிடிக்கிறோம்
+          GRADLE_DIR=$(find . -name "settings.gradle" -exec dirname {} \; | head -n 1)
+          if [ -z "$GRADLE_DIR" ]; then
+            echo "Error: settings.gradle not found anywhere!"
+            exit 1
+          fi
+          echo "Gradle build root found at: $GRADLE_DIR"
+          echo "GRADLE_DIR=$GRADLE_DIR" >> $GITHUB_OUTPUT
+
       - name: Build with Gradle
+        # மேலே கண்டுபிடித்த ஃபோல்டருக்கு உள்ளே போய் பில்ட் செய்கிறோம்
+        working-directory: ${{ steps.find_gradle.outputs.GRADLE_DIR }}
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: NaveenTool-debug-apk
-          # APK எந்த பாதையில இருக்கோ அதை இங்கே கொடுங்க
-          path: app/build/outputs/apk/debug/*.apk
+          # APK எந்த பாதையில இருக்கோ அதை இங்கே கொடுக்கிறோம்
+          path: ${{ steps.find_gradle.outputs.GRADLE_DIR }}/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
